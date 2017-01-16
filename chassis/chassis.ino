@@ -54,13 +54,13 @@ double right_kp = 0.8, right_ki = 0.005, right_kd = 0.0021; //kp = 0.040,ki = 0.
 PID right_PID(&right_Input, &right_Output, &right_Setpoint, right_kp, right_ki, right_kd, DIRECT);
 
 void setup() {
-  Serial.begin(9600);    // 启动串口通信，波特率为9600b/s
+  Serial.begin(57600);    // 启动串口通信，波特率为9600b/s
   // reserve 200 bytes for the inputString
 
-  pinMode(M_left, OUTPUT);   //直流电机驱动板的控制端口设置为输出模式
-  pinMode(E_left, OUTPUT);
-  pinMode(M_right, OUTPUT);
-  pinMode(E_right, OUTPUT);
+  pinMode(MOTOR_LEFT_PIN1, OUTPUT);   //直流电机驱动板的控制端口设置为输出模式
+  pinMode(MOTOR_LEFT_PIN2, OUTPUT);
+  pinMode(MOTOR_RIGHT_PIN1, OUTPUT);
+  pinMode(MOTOR_RIGHT_PIN2, OUTPUT);
 
   //定义外部中断0和1的中断子程序Code(),中断触发为下跳沿触发
   //当编码器码盘的OUT脉冲信号发生下跳沿中断时，
@@ -86,31 +86,8 @@ void setup() {
 
 }
 
-//子程序程序段
-void advance()//前进
-{
-  digitalWrite(M_left, HIGH);
-  analogWrite(E_left, val_left);
-  digitalWrite(M_right, HIGH);
-  analogWrite(E_right, val_right);
-}
-
-void back()//后退
-{
-  digitalWrite(M_left, LOW);
-  analogWrite(E_left, val_left);
-  digitalWrite(M_right, LOW);
-  analogWrite(E_right, val_right);
-}
-
-void Stop()//停止
-{
-  digitalWrite(E_right, LOW);
-  digitalWrite(E_left, LOW);
-}
-
 void loop() {
-  //  Serial.println("*************************************loop");
+  Serial.println("*************************************loop");
   //  t.header.frame_id = odom;
   //  t.child_frame_id = base_link;
   //  t.transform.translation.x = 1.0;
@@ -257,6 +234,34 @@ void loop() {
   run_direction = 's';
 }
 
+//子程序程序段
+void advance()//前进
+{
+  digitalWrite(MOTOR_LEFT_PIN1, HIGH);
+  digitalWrite(MOTOR_LEFT_PIN2, LOW);
+  analogWrite(MOTOR_LEFT_PIN1, val_left);
+  digitalWrite(MOTOR_RIGHT_PIN1, HIGH);
+  digitalWrite(MOTOR_RIGHT_PIN2, LOW);
+  analogWrite(MOTOR_RIGHT_PIN1, val_right);
+}
+
+void back()//后退
+{
+  digitalWrite(MOTOR_LEFT_PIN1, LOW);
+  digitalWrite(MOTOR_LEFT_PIN2, HIGH);
+  analogWrite(MOTOR_LEFT_PIN2, val_left);
+  digitalWrite(MOTOR_RIGHT_PIN1, LOW);
+  digitalWrite(MOTOR_RIGHT_PIN2, HIGH);
+  analogWrite(MOTOR_RIGHT_PIN2, val_right);
+}
+
+void Stop()//停止
+{
+  digitalWrite(MOTOR_LEFT_PIN1, LOW);
+  digitalWrite(MOTOR_LEFT_PIN2, LOW);
+  digitalWrite(MOTOR_RIGHT_PIN1, LOW);
+  digitalWrite(MOTOR_RIGHT_PIN2, LOW);
+}
 // 左侧车轮电机的编码器码盘计数中断子程序
 void Code1()
 {

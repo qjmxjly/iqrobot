@@ -14,7 +14,7 @@
 #define car_width 27 //小车宽度
 #define car_length 27 //小车长度
 
-#define E_left 5 //L298P直流电机驱动板的左轮电机使能端口连接到数字接口5
-#define M_left 4 //L298P直流电机驱动板的左轮电机转向端口连接到数字接口4
-#define E_right 6 //连接小车右轮电机的使能端口到数字接口6
-#define M_right 7 //连接小车右轮电机的转向端口到数字接口7
+#define MOTOR_LEFT_PIN1 5 //L298P直流电机驱动板的左轮电机使能端口连接到数字接口5
+#define MOTOR_LEFT_PIN2 4 //L298P直流电机驱动板的左轮电机转向端口连接到数字接口4
+#define MOTOR_RIGHT_PIN1 6 //连接小车右轮电机的使能端口到数字接口6
+#define MOTOR_RIGHT_PIN2 7 //连接小车右轮电机的转向端口到数字接口7
