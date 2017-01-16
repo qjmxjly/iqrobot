@@ -42,7 +42,7 @@ void motor_cb(const geometry_msgs::Twist& vel)
   linear = vel.linear.x * 100; //ROS中的单位是m/s;这里换算成cm的单位
   angular = vel.angular.z;
 }
-ros::Subscriber<geometry_msgs::Twist> sub("/turtle1/cmd_vel", motor_cb);
+ros::Subscriber<geometry_msgs::Twist> sub("/chassis/cmd_vel", motor_cb);
 
 //////PID
 double left_Setpoint, left_Input, left_Output, left_setpoint;
