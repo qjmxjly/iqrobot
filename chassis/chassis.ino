@@ -223,7 +223,7 @@ void loop() {
     run_direction = 'f';
   }
 
-  delay(1000);
+  delay(100);
   val_left_count_target = 0;
   left_Setpoint = 0;
   val_right_count_target = 0;
@@ -267,7 +267,7 @@ void Code1()
 {
   //为了不计入噪音干扰脉冲，
   //当2次中断之间的时间大于2ms时，计一次有效计数
-  //Serial.println("Code1");
+  Serial.println("Code1");
   if ((millis() - time1) > 2) {
     //当编码器码盘的OUT脉冲信号下跳沿每中断一次，
     count_left++; // 编码器码盘计数加一
@@ -283,7 +283,7 @@ void Code1()
 // 右侧车轮电机的编码器码盘计数中断子程序
 void Code2()
 {
-  //Serial.println("Code2");
+  Serial.println("Code2");
   if ((millis() - time2) > 2) {
     //当编码器码盘的OUT脉冲信号下跳沿每中断一次，
     count_right++; // 编码器码盘计数加一
