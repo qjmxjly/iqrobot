@@ -19,7 +19,7 @@ int val_left_count_target = 0; //小车左轮码盘每秒计数PID调节目标�
 int val_left = 0; //左轮电机PWM功率值。以左轮为基速度,PID调节右轮的速度
 int count_left = 0;  //左轮编码器码盘脉冲计数值;用于PID调整
 int count_right = 0; //右轮编码器码盘脉冲计数值;用于PID调整
-/////////
+
 char run_direction = 'f'; //f:前进;b:后退;s:stop
 int linear = 0;//15; //cm/second线速度
 int angular = 0;//1; //角速度,ros的angular.z
@@ -36,14 +36,6 @@ ros::NodeHandle nh;
 //char base_link[] = "/base_link";
 //char odom[] = "/odom";
 //nav_msgs::Odometry odom1;
-
-void motor_cb(const geometry_msgs::Twist& vel)
-{
-  linear = vel.linear.x * 100; //ROS中的单位是m/s;这里换算成cm的单位
-  angular = vel.angular.z;
-}
-ros::Subscriber<geometry_msgs::Twist> sub("/chassis/cmd_vel", motor_cb);
-
 //////PID
 double left_Setpoint, left_Input, left_Output, left_setpoint;
 double left_kp = 1, left_ki = 0.005, left_kd = 0.0001; //kp = 0.040,ki = 0.0005,kd =0.0011;
@@ -53,6 +45,14 @@ double right_Setpoint, right_Input, right_Output, right_setpoint;
 double right_kp = 0.8, right_ki = 0.005, right_kd = 0.0021; //kp = 0.040,ki = 0.0005,kd =0.0011;
 PID right_PID(&right_Input, &right_Output, &right_Setpoint, right_kp, right_ki, right_kd, DIRECT);
 
+ros::Subscriber<geometry_msgs::Twist> sub("/chassis/cmd_vel", motor_cb);
+
+void motor_cb(const geometry_msgs::Twist& vel)
+{
+  linear = vel.linear.x * 100; //ROS中的单位是m/s;这里换算成cm的单位
+  angular = vel.angular.z;
+}
+
 void setup() {
   Serial.begin(57600);    // 启动串口通信，波特率为9600b/s
   // reserve 200 bytes for the inputString
@@ -61,7 +61,17 @@ void setup() {
   pinMode(MOTOR_LEFT_PIN2, OUTPUT);
   pinMode(MOTOR_RIGHT_PIN1, OUTPUT);
   pinMode(MOTOR_RIGHT_PIN2, OUTPUT);
+  
+  pidSetup();
+  
+  nh.initNode();
+  nh.subscribe(sub);
+  //broadcaster.init(nh);
+ 
 
+}
+
+void pidSetup() {
   //定义外部中断0和1的中断子程序Code(),中断触发为下跳沿触发
   //当编码器码盘的OUT脉冲信号发生下跳沿中断时，
   //将自动调用执行中断子程序Code()。
@@ -69,10 +79,6 @@ void setup() {
   right_old_time = millis();
   attachInterrupt(0, Code1, FALLING);//小车左车轮电机的编码器脉冲中断函数
   attachInterrupt(1, Code2, FALLING);//小车右车轮电机的编码器脉冲中断函数
-
-  nh.initNode();
-  nh.subscribe(sub);
-  //broadcaster.init(nh);
   
   left_PID.SetOutputLimits(-254, 254);
   left_PID.SetSampleTime(500);
@@ -83,7 +89,6 @@ void setup() {
   right_PID.SetSampleTime(500);
   right_PID.SetMode(AUTOMATIC);
   right_PID.SetTunings(right_kp, right_ki, right_kd);
-
 }
 
 void loop() {
