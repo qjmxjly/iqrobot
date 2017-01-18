@@ -26,7 +26,7 @@ int angular = 0;//1; //角速度,ros的angular.z
 /////////
 unsigned long left_old_time = 0, right_old_time = 0; // 时间标记
 unsigned long time1 = 0, time2 = 0; // 时间标记
-unsigned long last_command_millis = AUTO_STOP_INTERVAL;
+unsigned long last_command_millis = 0;
 
 ////ros
 ros::NodeHandle nh;
@@ -46,31 +46,13 @@ double right_kp = 0.8, right_ki = 0.005, right_kd = 0.0021; //kp = 0.040,ki = 0.
 PID right_PID(&right_Input, &right_Output, &right_Setpoint, right_kp, right_ki, right_kd, DIRECT);
 
 
-void motor_cb(const geometry_msgs::Twist& vel)
+void message_cb(const geometry_msgs::Twist& vel)
 {
   linear = vel.linear.x * 100; //ROS中的单位是m/s;这里换算成cm的单位
   angular = vel.angular.z;
 }
 
-ros::Subscriber<geometry_msgs::Twist> sub("/chassis/cmd_vel", motor_cb, 10);
-
-void setup() {
-  //Serial.begin(57600);    // 启动串口通信，波特率为9600b/s
-  // reserve 200 bytes for the inputString
-
-  pinMode(MOTOR_LEFT_PIN1, OUTPUT);   //直流电机驱动板的控制端口设置为输出模式
-  pinMode(MOTOR_LEFT_PIN2, OUTPUT);
-  pinMode(MOTOR_RIGHT_PIN1, OUTPUT);
-  pinMode(MOTOR_RIGHT_PIN2, OUTPUT);
-  
-  pidSetup();
-  
-  nh.initNode();
-  nh.subscribe(sub);
-  //broadcaster.init(nh);
- 
-
-}
+ros::Subscriber<geometry_msgs::Twist> sub("/chassis/cmd_vel", message_cb);
 
 void pidSetup() {
   //定义外部中断0和1的中断子程序Code(),中断触发为下跳沿触发
@@ -92,6 +74,26 @@ void pidSetup() {
   right_PID.SetTunings(right_kp, right_ki, right_kd);
 }
 
+void setup() {
+  //Serial.begin(57600);    // 启动串口通信，波特率为9600b/s
+  // reserve 200 bytes for the inputString
+
+  pinMode(MOTOR_LEFT_PIN1, OUTPUT);   //直流电机驱动板的控制端口设置为输出模式
+  pinMode(MOTOR_LEFT_PIN2, OUTPUT);
+  pinMode(MOTOR_RIGHT_PIN1, OUTPUT);
+  pinMode(MOTOR_RIGHT_PIN2, OUTPUT);
+  
+  pidSetup();
+  
+  nh.initNode();
+  nh.subscribe(sub);
+  //broadcaster.init(nh);
+ 
+
+}
+
+
+
 void loop() {
   //Serial.println("*************************************loop");
   //  t.header.frame_id = odom;
@@ -104,11 +106,11 @@ void loop() {
   //  t.header.stamp = nh.now();
   //  broadcaster.sendTransform(t);
   nh.spinOnce();
-  delay(10);
+  delay(1);
   runMotor();
-  if((millis() - last_command_millis) > AUTO_STOP_INTERVAL) {
-    resetMotor();
-  }
+  //if((millis() - last_command_millis) > AUTO_STOP_INTERVAL) {
+  //  resetMotor();
+  //}
 }
 
 void resetMotor() {
@@ -118,14 +120,14 @@ void resetMotor() {
   right_Setpoint = 0;
   linear = 0;
   angular = 0;
-  Stop();
+  stopMotor();
   run_direction = 's';  
 }
 
 void runMotor() {
   if (angular == 0) { //直行
     if (linear > 0) { //前进
-      Serial.println("Go Forward!\n");
+      //Serial.println("Go Forward!\n");
       if (linear > max_linear)
         linear = max_linear;
 
@@ -146,7 +148,7 @@ void runMotor() {
       run_direction = 'f';
       last_command_millis = millis();
     } else if (linear < 0) { //后退
-      Serial.println("Go Backward!\n");
+      //Serial.println("Go Backward!\n");
       linear = abs(linear);
       if (linear > max_linear)
         linear = max_linear;
@@ -166,11 +168,13 @@ void runMotor() {
       back();
       run_direction = 'b';
       last_command_millis = millis();
+    } else {
+      stopMotor();
     }
 
   } else if (angular > 0) { //左转
       last_command_millis = millis();
-    Serial.println("Turn Left!\n");
+    //Serial.println("Turn Left!\n");
     if (linear > max_turn_line) //////限制最大转弯线速度
     {
       angular = angular * max_turn_line / linear;
@@ -210,7 +214,7 @@ void runMotor() {
 
   } else if (angular < 0) { //右转
       last_command_millis = millis();
-    Serial.println("Turn Right!");
+    //Serial.println("Turn Right!");
     if (linear > max_turn_line) //////限制最大转弯线速度
     {
       angular = angular * max_turn_line / linear;
@@ -247,6 +251,8 @@ void runMotor() {
 
     advance();
     run_direction = 'f';
+  } else {
+    stopMotor();
   }
 
 }
@@ -272,7 +278,7 @@ void back()//后退
   analogWrite(MOTOR_RIGHT_PIN2, val_right);
 }
 
-void Stop()//停止
+void stopMotor()//停止
 {
   digitalWrite(MOTOR_LEFT_PIN1, LOW);
   digitalWrite(MOTOR_LEFT_PIN2, LOW);
@@ -284,7 +290,7 @@ void Code1()
 {
   //为了不计入噪音干扰脉冲，
   //当2次中断之间的时间大于2ms时，计一次有效计数
-  Serial.println("Code1");
+  //Serial.println("Code1");
   if ((millis() - time1) > 2) {
     //当编码器码盘的OUT脉冲信号下跳沿每中断一次，
     count_left++; // 编码器码盘计数加一
@@ -300,7 +306,7 @@ void Code1()
 // 右侧车轮电机的编码器码盘计数中断子程序
 void Code2()
 {
-  Serial.println("Code2");
+  //Serial.println("Code2");
   if ((millis() - time2) > 2) {
     //当编码器码盘的OUT脉冲信号下跳沿每中断一次，
     count_right++; // 编码器码盘计数加一
@@ -316,7 +322,7 @@ void Code2()
 }
 
 void PID_left() {
-  Serial.println("********************************begin PID left");
+  //Serial.println("********************************begin PID left");
 
   left_Input = count_left * 10;
   left_PID.Compute();
@@ -330,10 +336,10 @@ void PID_left() {
     advance();
   if (run_direction == 'b')
     back();
-  Serial.println("********************************end PID Left");
+  //Serial.println("********************************end PID Left");
 }
 void PID_right() {
-  Serial.println("********************************begin PID Right");
+  //Serial.println("********************************begin PID Right");
 
   right_Input = count_right * 10;
   right_PID.Compute();
@@ -346,5 +352,5 @@ void PID_right() {
     advance();
   if (run_direction == 'b')
     back();
-  Serial.println("********************************end PID Right");
+  //Serial.println("********************************end PID Right");
 }
