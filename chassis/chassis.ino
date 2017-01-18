@@ -1,7 +1,7 @@
 /**
-*  iqrobot 底盘 arduino 驱动
-*  
-*/
+ *  iqrobot 底盘 arduino 驱动
+ *  
+ */
 
 #include "chassis.h"        // 头文件定义
 #include <PID_v1.h> // pid 控制库
@@ -62,7 +62,7 @@ void pidSetup() {
   right_old_time = millis();
   attachInterrupt(0, Code1, FALLING);//小车左车轮电机的编码器脉冲中断函数
   attachInterrupt(1, Code2, FALLING);//小车右车轮电机的编码器脉冲中断函数
-  
+
   left_PID.SetOutputLimits(-254, 254);
   left_PID.SetSampleTime(500);
   left_PID.SetMode(AUTOMATIC);
@@ -75,20 +75,20 @@ void pidSetup() {
 }
 
 void setup() {
-  //Serial.begin(57600);    // 启动串口通信，波特率为9600b/s
+  Serial.begin(57600);    // 启动串口通信，波特率为9600b/s
   // reserve 200 bytes for the inputString
 
   pinMode(MOTOR_LEFT_PIN1, OUTPUT);   //直流电机驱动板的控制端口设置为输出模式
   pinMode(MOTOR_LEFT_PIN2, OUTPUT);
   pinMode(MOTOR_RIGHT_PIN1, OUTPUT);
   pinMode(MOTOR_RIGHT_PIN2, OUTPUT);
-  
+
   pidSetup();
-  
+
   nh.initNode();
   nh.subscribe(sub);
   //broadcaster.init(nh);
- 
+
 
 }
 
@@ -125,6 +125,7 @@ void resetMotor() {
 }
 
 void runMotor() {
+  Serial.println(linear);
   if (angular == 0) { //直行
     if (linear > 0) { //前进
       //Serial.println("Go Forward!\n");
@@ -145,9 +146,9 @@ void runMotor() {
       right_Setpoint = val_right_count_target;
 
       advance();
-      run_direction = 'f';
       last_command_millis = millis();
-    } else if (linear < 0) { //后退
+    } 
+    else if (linear < 0) { //后退
       //Serial.println("Go Backward!\n");
       linear = abs(linear);
       if (linear > max_linear)
@@ -166,20 +167,22 @@ void runMotor() {
       right_Setpoint = val_right_count_target;
 
       back();
-      run_direction = 'b';
       last_command_millis = millis();
-    } else {
+    } 
+    else {
       stopMotor();
     }
 
-  } else if (angular > 0) { //左转
-      last_command_millis = millis();
+  } 
+  else if (angular > 0) { //左转
+    last_command_millis = millis();
     //Serial.println("Turn Left!\n");
     if (linear > max_turn_line) //////限制最大转弯线速度
     {
       angular = angular * max_turn_line / linear;
       linear = max_turn_line;
-    } else if (linear == 0) {
+    } 
+    else if (linear == 0) {
       linear = max_turn_line;
     }
 
@@ -209,18 +212,19 @@ void runMotor() {
     left_Setpoint = val_left_count_target;
     right_Setpoint = val_right_count_target;
 
-    run_direction = 'f';
     advance();
 
-  } else if (angular < 0) { //右转
-      last_command_millis = millis();
+  } 
+  else if (angular < 0) { //右转
+    last_command_millis = millis();
     //Serial.println("Turn Right!");
     if (linear > max_turn_line) //////限制最大转弯线速度
     {
       angular = angular * max_turn_line / linear;
       linear = max_turn_line;
 
-    } else if (linear == 0) {
+    } 
+    else if (linear == 0) {
       linear = max_turn_line;
     }
 
@@ -250,8 +254,8 @@ void runMotor() {
     right_Setpoint = val_right_count_target;
 
     advance();
-    run_direction = 'f';
-  } else {
+  } 
+  else {
     stopMotor();
   }
 
@@ -260,6 +264,7 @@ void runMotor() {
 //子程序程序段
 void advance()//前进
 {
+  run_direction = 'f';
   digitalWrite(MOTOR_LEFT_PIN1, HIGH);
   digitalWrite(MOTOR_LEFT_PIN2, LOW);
   analogWrite(MOTOR_LEFT_PIN1, val_left);
@@ -270,9 +275,10 @@ void advance()//前进
 
 void back()//后退
 {
+  run_direction = 'b';
   digitalWrite(MOTOR_LEFT_PIN1, LOW);
   digitalWrite(MOTOR_LEFT_PIN2, HIGH);
-  analogWrite(MOTOR_LEFT_PIN2, val_left);
+  analogWrite(MOTOR_LEFT_PIN1, val_left);
   digitalWrite(MOTOR_RIGHT_PIN1, LOW);
   digitalWrite(MOTOR_RIGHT_PIN2, HIGH);
   analogWrite(MOTOR_RIGHT_PIN2, val_right);
@@ -290,7 +296,6 @@ void Code1()
 {
   //为了不计入噪音干扰脉冲，
   //当2次中断之间的时间大于2ms时，计一次有效计数
-  //Serial.println("Code1");
   if ((millis() - time1) > 2) {
     //当编码器码盘的OUT脉冲信号下跳沿每中断一次，
     count_left++; // 编码器码盘计数加一
@@ -306,7 +311,6 @@ void Code1()
 // 右侧车轮电机的编码器码盘计数中断子程序
 void Code2()
 {
-  //Serial.println("Code2");
   if ((millis() - time2) > 2) {
     //当编码器码盘的OUT脉冲信号下跳沿每中断一次，
     count_right++; // 编码器码盘计数加一
@@ -322,7 +326,6 @@ void Code2()
 }
 
 void PID_left() {
-  //Serial.println("********************************begin PID left");
 
   left_Input = count_left * 10;
   left_PID.Compute();
@@ -336,10 +339,8 @@ void PID_left() {
     advance();
   if (run_direction == 'b')
     back();
-  //Serial.println("********************************end PID Left");
 }
 void PID_right() {
-  //Serial.println("********************************begin PID Right");
 
   right_Input = count_right * 10;
   right_PID.Compute();
@@ -352,5 +353,5 @@ void PID_right() {
     advance();
   if (run_direction == 'b')
     back();
-  //Serial.println("********************************end PID Right");
 }
+
