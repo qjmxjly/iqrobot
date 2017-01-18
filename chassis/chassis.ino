@@ -12,7 +12,6 @@
 #include <nav_msgs/Odometry.h>
 
 
-
 int val_right_count_target = 0; //小车右轮码盘每秒计数PID调节目标值,根据这个值PID val_rigth;
 int val_right = 0; //小车右轮电机的PWM功率值
 int val_left_count_target = 0; //小车左轮码盘每秒计数PID调节目标值,根据这个值PID val_left;
@@ -27,6 +26,7 @@ int angular = 0;//1; //角速度,ros的angular.z
 /////////
 unsigned long left_old_time = 0, right_old_time = 0; // 时间标记
 unsigned long time1 = 0, time2 = 0; // 时间标记
+unsigned long last_command_millis = AUTO_STOP_INTERVAL;
 
 ////ros
 ros::NodeHandle nh;
@@ -45,7 +45,6 @@ double right_Setpoint, right_Input, right_Output, right_setpoint;
 double right_kp = 0.8, right_ki = 0.005, right_kd = 0.0021; //kp = 0.040,ki = 0.0005,kd =0.0011;
 PID right_PID(&right_Input, &right_Output, &right_Setpoint, right_kp, right_ki, right_kd, DIRECT);
 
-ros::Subscriber<geometry_msgs::Twist> sub("/chassis/cmd_vel", motor_cb);
 
 void motor_cb(const geometry_msgs::Twist& vel)
 {
@@ -53,8 +52,10 @@ void motor_cb(const geometry_msgs::Twist& vel)
   angular = vel.angular.z;
 }
 
+ros::Subscriber<geometry_msgs::Twist> sub("/chassis/cmd_vel", motor_cb, 10);
+
 void setup() {
-  Serial.begin(57600);    // 启动串口通信，波特率为9600b/s
+  //Serial.begin(57600);    // 启动串口通信，波特率为9600b/s
   // reserve 200 bytes for the inputString
 
   pinMode(MOTOR_LEFT_PIN1, OUTPUT);   //直流电机驱动板的控制端口设置为输出模式
@@ -92,7 +93,7 @@ void pidSetup() {
 }
 
 void loop() {
-  Serial.println("*************************************loop");
+  //Serial.println("*************************************loop");
   //  t.header.frame_id = odom;
   //  t.child_frame_id = base_link;
   //  t.transform.translation.x = 1.0;
@@ -103,9 +104,25 @@ void loop() {
   //  t.header.stamp = nh.now();
   //  broadcaster.sendTransform(t);
   nh.spinOnce();
+  delay(10);
+  runMotor();
+  if((millis() - last_command_millis) > AUTO_STOP_INTERVAL) {
+    resetMotor();
+  }
+}
 
-  // put your main code here, to run repeatedly:
+void resetMotor() {
+  val_left_count_target = 0;
+  left_Setpoint = 0;
+  val_right_count_target = 0;
+  right_Setpoint = 0;
+  linear = 0;
+  angular = 0;
+  Stop();
+  run_direction = 's';  
+}
 
+void runMotor() {
   if (angular == 0) { //直行
     if (linear > 0) { //前进
       Serial.println("Go Forward!\n");
@@ -127,6 +144,7 @@ void loop() {
 
       advance();
       run_direction = 'f';
+      last_command_millis = millis();
     } else if (linear < 0) { //后退
       Serial.println("Go Backward!\n");
       linear = abs(linear);
@@ -147,9 +165,11 @@ void loop() {
 
       back();
       run_direction = 'b';
+      last_command_millis = millis();
     }
 
   } else if (angular > 0) { //左转
+      last_command_millis = millis();
     Serial.println("Turn Left!\n");
     if (linear > max_turn_line) //////限制最大转弯线速度
     {
@@ -189,6 +209,7 @@ void loop() {
     advance();
 
   } else if (angular < 0) { //右转
+      last_command_millis = millis();
     Serial.println("Turn Right!");
     if (linear > max_turn_line) //////限制最大转弯线速度
     {
@@ -228,15 +249,6 @@ void loop() {
     run_direction = 'f';
   }
 
-  delay(100);
-  val_left_count_target = 0;
-  left_Setpoint = 0;
-  val_right_count_target = 0;
-  right_Setpoint = 0;
-  linear = 0;
-  angular = 0;
-  Stop();
-  run_direction = 's';
 }
 
 //子程序程序段

@@ -1,3 +1,5 @@
+#define AUTO_STOP_INTERVAL 300  // 300
+
 #define PIN_LEFT  2 //外部中断0,左轮
 #define PIN_RIGHT 3 //外部中断1,右轮
 
