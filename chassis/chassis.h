@@ -3,16 +3,16 @@
 #define PIN_LEFT  2 //外部中断0,左轮
 #define PIN_RIGHT 3 //外部中断1,右轮
 
-#define max_linear       20 //最大线速度cm/秒
+#define max_linear       50 //最大线速度cm/秒
 #define max_turn_line    18 //最大转弯线速度
 //#define max_angular    1.45
 #define max_linear_pwd   255
 
-#define hole_number 31 //码盘孔数
-#define diameter 18.535 //轮cm直径
+#define hole_number 20 //码盘孔数
+#define diameter 6.5 //轮cm直径
 #define diamete_ratio 1 //左轮相对于右轮轮径比系数,往左偏,调小,往右偏调大
-#define center_speed 220 //小车电机的PWM功率初始值
-#define gear_ratio 75 //转速比
+#define center_speed 255 //小车电机的PWM功率初始值
+#define gear_ratio 48 //转速比
 #define car_width 27 //小车宽度
 #define car_length 27 //小车长度
 

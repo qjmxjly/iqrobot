@@ -22,6 +22,7 @@ int count_right = 0; //右轮编码器码盘脉冲计数值;用于PID调整
 char run_direction = 'f'; //f:前进;b:后退;s:stop
 int linear = 0;//15; //cm/second线速度
 int angular = 0;//1; //角速度,ros的angular.z
+int line;
 ///转弯半径一定要大于小车宽度的一半,也就是linear / angular一定是大于13.5,也就是最小转弯半径是13.5
 /////////
 unsigned long left_old_time = 0, right_old_time = 0; // 时间标记
@@ -42,7 +43,7 @@ double left_kp = 1, left_ki = 0.005, left_kd = 0.0001; //kp = 0.040,ki = 0.0005,
 PID left_PID(&left_Input, &left_Output, &left_Setpoint, left_kp, left_ki, left_kd, DIRECT);
 
 double right_Setpoint, right_Input, right_Output, right_setpoint;
-double right_kp = 0.8, right_ki = 0.005, right_kd = 0.0021; //kp = 0.040,ki = 0.0005,kd =0.0011;
+double right_kp = 1, right_ki = 0.005, right_kd = 0.0001; //kp = 0.040,ki = 0.0005,kd =0.0011;
 PID right_PID(&right_Input, &right_Output, &right_Setpoint, right_kp, right_ki, right_kd, DIRECT);
 
 
@@ -125,10 +126,14 @@ void resetMotor() {
 }
 
 void runMotor() {
-  Serial.println(linear);
+
+  
   if (angular == 0) { //直行
     if (linear > 0) { //前进
-      //Serial.println("Go Forward!\n");
+      if((millis() - last_command_millis) > AUTO_STOP_INTERVAL) {
+       last_command_millis = millis();
+        //Serial.println("Forward");
+      }
       if (linear > max_linear)
         linear = max_linear;
 
@@ -146,15 +151,18 @@ void runMotor() {
       right_Setpoint = val_right_count_target;
 
       advance();
-      last_command_millis = millis();
     } 
     else if (linear < 0) { //后退
-      //Serial.println("Go Backward!\n");
-      linear = abs(linear);
-      if (linear > max_linear)
-        linear = max_linear;
-      float linear_left = linear; //左内圈线速度
-      float linear_right = linear; //右外圈线速度
+      if((millis() - last_command_millis) > AUTO_STOP_INTERVAL) {
+        last_command_millis = millis();
+        //Serial.println("back");
+      }
+
+      int abslinear = abs(linear);
+      if (abslinear > max_linear)
+        abslinear = max_linear;
+      float linear_left = abslinear; //左内圈线速度
+      float linear_right = abslinear; //右外圈线速度
 
 
       val_right_count_target = linear_right * gear_ratio / (diameter * diamete_ratio / hole_number); //左内圈线速度对应的孔数
@@ -167,7 +175,6 @@ void runMotor() {
       right_Setpoint = val_right_count_target;
 
       back();
-      last_command_millis = millis();
     } 
     else {
       stopMotor();
@@ -176,7 +183,6 @@ void runMotor() {
   } 
   else if (angular > 0) { //左转
     last_command_millis = millis();
-    //Serial.println("Turn Left!\n");
     if (linear > max_turn_line) //////限制最大转弯线速度
     {
       angular = angular * max_turn_line / linear;
@@ -278,7 +284,7 @@ void back()//后退
   run_direction = 'b';
   digitalWrite(MOTOR_LEFT_PIN1, LOW);
   digitalWrite(MOTOR_LEFT_PIN2, HIGH);
-  analogWrite(MOTOR_LEFT_PIN1, val_left);
+  analogWrite(MOTOR_LEFT_PIN2, val_left);
   digitalWrite(MOTOR_RIGHT_PIN1, LOW);
   digitalWrite(MOTOR_RIGHT_PIN2, HIGH);
   analogWrite(MOTOR_RIGHT_PIN2, val_right);
