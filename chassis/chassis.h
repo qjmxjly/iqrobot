@@ -4,7 +4,7 @@
 #define PIN_RIGHT 3 //外部中断1,右轮
 
 #define max_linear       50 //最大线速度cm/秒
-#define max_turn_line    18 //最大转弯线速度
+#define max_turn_line    12 //最大转弯线速度
 //#define max_angular    1.45
 #define max_linear_pwd   255
 

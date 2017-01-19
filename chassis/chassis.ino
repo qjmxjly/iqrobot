@@ -8,9 +8,6 @@
 #include <ros.h>
 #include <ros/time.h>
 #include <geometry_msgs/Twist.h>
-#include <tf/transform_broadcaster.h>
-#include <nav_msgs/Odometry.h>
-
 
 int val_right_count_target = 0; //小车右轮码盘每秒计数PID调节目标值,根据这个值PID val_rigth;
 int val_right = 0; //小车右轮电机的PWM功率值
@@ -91,22 +88,9 @@ void setup() {
 
 
 void loop() {
-  //Serial.println("*************************************loop");
-  //  t.header.frame_id = odom;
-  //  t.child_frame_id = base_link;
-  //  t.transform.translation.x = 1.0;
-  //  t.transform.rotation.x = 0.0;
-  //  t.transform.rotation.y = 0.0;
-  //  t.transform.rotation.z = 0.0;
-  //  t.transform.rotation.w = 1.0;
-  //  t.header.stamp = nh.now();
-  //  broadcaster.sendTransform(t);
   nh.spinOnce();
   delay(1);
   runMotor();
-  //if((millis() - last_command_millis) > AUTO_STOP_INTERVAL) {
-  //  resetMotor();
-  //}
 }
 
 void resetMotor() {
@@ -116,12 +100,11 @@ void resetMotor() {
   right_Setpoint = 0;
   linear = 0;
   angular = 0;
-  stopMotor();
   run_direction = 's';  
+  stopMotor();
 }
 
 void runMotor() {
-
   
   if (angular == 0) { //直行
     if (linear > 0) { //前进
@@ -177,16 +160,14 @@ void runMotor() {
 
   } 
   else if (angular > 0) { //左转
-    last_command_millis = millis();
+    
     if (linear > max_turn_line) //////限制最大转弯线速度
     {
       angular = angular * max_turn_line / linear;
-      linear = max_turn_line;
     } 
-    else if (linear == 0) {
-      linear = max_turn_line;
-    }
-
+    
+    linear = linear > max_turn_line ? max_turn_line : linear;
+    
     float radius = linear / angular; //计算半径
 
     if (radius < car_width / 2) ///////如果计算的转弯半径小于最小半径,则设置为最小转弯半径
@@ -197,11 +178,6 @@ void runMotor() {
 
     float linear_left = radius_left * angular; //左内圈线速度
     float linear_right = radius_right * angular; //右外圈线速度
-
-    if (linear == max_turn_line) {
-      linear_left = 255 * (linear_left / linear_right);
-      linear_right = 255;
-    }
 
 
     val_right_count_target = linear_right * gear_ratio / (diameter / hole_number); //左内圈线速度对应的孔数
@@ -217,20 +193,16 @@ void runMotor() {
 
   } 
   else if (angular < 0) { //右转
-    last_command_millis = millis();
-    //Serial.println("Turn Right!");
+
     if (linear > max_turn_line) //////限制最大转弯线速度
     {
       angular = angular * max_turn_line / linear;
-      linear = max_turn_line;
-
     } 
-    else if (linear == 0) {
-      linear = max_turn_line;
-    }
+    
+    linear = linear > max_turn_line ? max_turn_line : linear;
+    
+    float radius = linear / angular; //计算半径
 
-
-    float radius = linear / angular;
     if (radius < car_width / 2) ///////如果计算的转弯半径小于最小半径,则设置为最小转弯半径
       radius = car_width / 2;
 
@@ -239,11 +211,6 @@ void runMotor() {
 
     float linear_left = radius_left * angular;
     float linear_right = radius_right * angular;
-
-    if (linear == max_turn_line) {
-      linear_right = 255 * (linear_right / linear_left);
-      linear_left = 255;
-    }
 
     val_right_count_target = linear_right * gear_ratio / (diameter / hole_number); //左内圈线速度对应的孔数
     val_left_count_target = linear_left * gear_ratio / (diameter * diamete_ratio / hole_number); //右外圈线速度对应的孔数
