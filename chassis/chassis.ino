@@ -22,7 +22,7 @@ int count_right = 0; //右轮编码器码盘脉冲计数值;用于PID调整
 char run_direction = 'f'; //f:前进;b:后退;s:stop
 int linear = 0;//15; //cm/second线速度
 int angular = 0;//1; //角速度,ros的angular.z
-int line;
+
 ///转弯半径一定要大于小车宽度的一半,也就是linear / angular一定是大于13.5,也就是最小转弯半径是13.5
 /////////
 unsigned long left_old_time = 0, right_old_time = 0; // 时间标记
@@ -32,11 +32,6 @@ unsigned long last_command_millis = 0;
 ////ros
 ros::NodeHandle nh;
 
-//geometry_msgs::TransformStamped t;
-//tf::TransformBroadcaster broadcaster;
-//char base_link[] = "/base_link";
-//char odom[] = "/odom";
-//nav_msgs::Odometry odom1;
 //////PID
 double left_Setpoint, left_Input, left_Output, left_setpoint;
 double left_kp = 1, left_ki = 0.005, left_kd = 0.0001; //kp = 0.040,ki = 0.0005,kd =0.0011;
