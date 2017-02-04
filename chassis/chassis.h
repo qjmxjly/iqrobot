@@ -13,8 +13,8 @@
 #define diamete_ratio 1 //左轮相对于右轮轮径比系数,往左偏,调小,往右偏调大
 #define center_speed 255 //小车电机的PWM功率初始值
 #define gear_ratio 48 //转速比
-#define car_width 27 //小车宽度
-#define car_length 27 //小车长度
+#define car_width 16 //小车宽度
+#define car_length 22 //小车长度
 
 #define MOTOR_LEFT_PIN1 7 //L298P直流电机驱动板的左轮电机使能端口连接到数字接口5
 #define MOTOR_LEFT_PIN2 6 //L298P直流电机驱动板的左轮电机转向端口连接到数字接口4
